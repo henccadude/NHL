@@ -1,0 +1,47 @@
+
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL-poolin pisteiden seuranta</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>NHL-poolin pisteiden seuranta</h1>
+        <p class="muted">Valitse 10 pelaajaa / osallistuja. Pisteet päivittyvät Stats API:sta valitulle kaudelle.</p>
+      </header>
+
+      <section class="card">
+        <h2>Kausi</h2>
+        <div id="seasonPicker" class="row gap">
+          <button id="btnPrev" class="btn">Edellinen</button>
+          <button id="btnCur" class="btn btn-primary">Nykyinen</button>
+          <button id="btnNext" class="btn">Seuraava</button>
+          
+          
+          <span class="muted small" id="seasonLabel"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Lisää osallistuja</h2>
+        <div class="row gap">
+          <input id="newParticipant" class="input" placeholder="Osallistujan nimi" />
+          <button id="addParticipant" class="btn btn-primary">Lisää</button>
+        </div>
+      </section>
+
+      <div id="participants"></div>
+
+      <footer class="muted small">
+        <hr/>
+        <p></p>
+      </footer>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
