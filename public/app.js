@@ -1,5 +1,5 @@
 
-const STORAGE_KEY = 'nhl_pool_anyserver_v5_3'
+const STORAGE_KEY = 'nhl_pool_anyserver_v5_4'
 
 // randomUUID polyfill
 if (!('crypto' in window) || !('randomUUID' in crypto)) {
@@ -20,11 +20,41 @@ function currentNHLSeason(date = new Date()) {
 function seasonFromStartYear(y) { return `${y}${y+1}` }
 function fmtSeason(s){ return `${s.slice(0,4)}–${s.slice(4)}` }
 
-function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.participants)) }catch{} }
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.participants)) }
+  catch(e){ console.error('saveState failed', e); alert('Tallennus epäonnistui (selainvarasto täynnä?)') }
+}
 function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : [] }catch{ return [] }}
 
+// --- Export / Import JSON ---
+function exportJSON(){
+  try{
+    const data = JSON.stringify(state.participants, null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `nhl-pool-${state.season}.json`
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() }, 500)
+  }catch(e){ alert('Vienti epäonnistui') }
+}
+function importJSONFile(file){
+  const reader = new FileReader()
+  reader.onload = () => {
+    try{
+      const arr = JSON.parse(reader.result)
+      if (!Array.isArray(arr)) throw new Error('not array')
+      state.participants = arr
+      saveState()
+      render({ autoRefresh: true })
+    }catch(e){ alert('Virheellinen JSON-tiedosto') }
+  }
+  reader.readAsText(file)
+}
+
 // Static refs fetched on DOMContentLoaded
-let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel, rankingBody, refreshAllBtn
+let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel, rankingBody, refreshAllBtn, btnExport, btnImport, fileImport
 
 function buildSeasonButtons(){
   const seasonPickerEl = document.getElementById('seasonPicker')
@@ -183,14 +213,15 @@ function renderParticipant(participant){
           const btn = document.createElement('button')
           btn.setAttribute('data-id', String(p.id))
           btn.setAttribute('data-name', p.name)
-
+          btn.className = 'result-item'
           const tag = document.createElement('span')
           tag.className = 'badge'
           tag.textContent = '#' + p.id
-
+          const nameSpan = document.createElement('span')
+          nameSpan.className = 'name'
+          nameSpan.textContent = p.name
           btn.appendChild(tag)
-          btn.appendChild(document.createTextNode(' ' + p.name))
-
+          btn.appendChild(nameSpan)
           btn.addEventListener('click', async () => {
             const id = Number(btn.getAttribute('data-id'))
             const name = btn.getAttribute('data-name') || ''
@@ -198,7 +229,6 @@ function renderParticipant(participant){
             await refreshStats(participant, card)
             renderRanking()
           })
-
           resultsEl.appendChild(btn)
         })
       }catch(e){
@@ -231,7 +261,6 @@ async function refreshStats(participant, card){
   saveState()
 }
 
-
 function renderRows(participant, card){
   const tbody = card.querySelector('[data-role="tbody"]')
   tbody.innerHTML=''
@@ -259,7 +288,6 @@ function renderRows(participant, card){
   if (totalEl) totalEl.textContent = total
 }
 
-
 async function refreshAllParticipants(){
   const cards = Array.from(document.querySelectorAll('#participants .card'))
   const participants = state.participants.slice()
@@ -279,6 +307,9 @@ window.addEventListener('DOMContentLoaded', () => {
   seasonLabel = document.getElementById('seasonLabel')
   rankingBody = document.getElementById('rankingBody')
   refreshAllBtn = document.getElementById('refreshAll')
+  btnExport = document.getElementById('btnExport')
+  btnImport = document.getElementById('btnImport')
+  fileImport = document.getElementById('fileImport')
 
   addParticipantBtn.addEventListener('click', () => {
     const name = (newParticipantEl.value || '').trim()
@@ -290,6 +321,13 @@ window.addEventListener('DOMContentLoaded', () => {
   })
 
   if (refreshAllBtn) refreshAllBtn.addEventListener('click', () => refreshAllParticipants())
+  if (btnExport) btnExport.addEventListener('click', () => exportJSON())
+  if (btnImport) btnImport.addEventListener('click', () => fileImport && fileImport.click())
+  if (fileImport) fileImport.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0]
+    if (f) importJSONFile(f)
+    e.target.value = ''
+  })
 
   render()
 })

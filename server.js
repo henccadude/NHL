@@ -2,6 +2,7 @@
 import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import compression from 'compression'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -9,16 +10,30 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Log
+// tiny access log
 app.use((req, _res, next) => { console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`); next() })
 
-// Static
-app.use(express.static(path.join(__dirname, 'public')))
+// gzip
+app.use(compression())
 
-// Health
+// static
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, p){
+    if (p.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
+    else res.setHeader('Cache-Control', 'public, max-age=604800')
+  }
+}))
+
+// health
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
-// Helper fetch with timeout
+// simple in-memory cache for /api/player responses
+const cache = new Map() // key: `${id}:${season}` -> {data, exp}
+const TTL = 3 * 60 * 1000
+const getC = k => { const v = cache.get(k); if (!v || v.exp < Date.now()) return null; return v.data }
+const setC = (k,d) => cache.set(k, { data: d, exp: Date.now() + TTL })
+
+// helper fetch with timeout
 async function fetchWithTimeout(url, opts = {}, ms = 12000) {
   const ac = new AbortController()
   const id = setTimeout(() => ac.abort(), ms)
@@ -30,7 +45,7 @@ async function fetchWithTimeout(url, opts = {}, ms = 12000) {
   }
 }
 
-// Player search via Records API
+// player search via Records API (no CORS from browser → proxy through server)
 app.get('/api/search', async (req, res) => {
   try {
     const name = String(req.query.name || '').trim()
@@ -49,17 +64,16 @@ app.get('/api/search', async (req, res) => {
       id: Number(row?.playerId ?? row?.id),
       name: String(row?.fullName || row?.name || 'Tuntematon')
     }))
-    const map = new Map()
-    out.forEach(p => { if (p.id && p.name) map.set(p.id, p) })
+    const uniq = Array.from(new Map(out.filter(p => p.id && p.name).map(p=>[p.id,p])).values())
     res.setHeader('Access-Control-Allow-Origin', '*')
-    return res.json(Array.from(map.values()).slice(0, 100))
+    return res.json(uniq.slice(0, 100))
   } catch (e) {
     console.error('Search fatal error', e)
     return res.status(500).json({ error: 'search error', detail: String(e?.message || e) })
   }
 })
 
-// Player season stats via api.nhle.com (skater/goalie). Name via api-web.nhle.com.
+// player season stats via api.nhle.com (skater/goalie). Name via api-web.nhle.com.
 app.get('/api/player/:id', async (req, res) => {
   const id = Number(req.params.id)
   const season = String(req.query.season || '').trim()
@@ -72,6 +86,10 @@ app.get('/api/player/:id', async (req, res) => {
   if (!Number.isFinite(startYear) || startYear > currentSeasonStart + 1) {
     return res.json({ id, name: `#${id}`, games: 0, goals: 0, assists: 0, points: 0 })
   }
+
+  const key = `${id}:${season}`
+  const hit = getC(key)
+  if (hit) { res.setHeader('Access-Control-Allow-Origin','*'); return res.json(hit) }
 
   try {
     // Name
@@ -135,6 +153,7 @@ app.get('/api/player/:id', async (req, res) => {
     }
 
     const payload = { id, name: fullName, games, goals, assists, points }
+    setC(key, payload)
     res.setHeader('Access-Control-Allow-Origin', '*')
     return res.json(payload)
   } catch (e) {
@@ -143,7 +162,7 @@ app.get('/api/player/:id', async (req, res) => {
   }
 })
 
-// Root page + SPA fallbacks
+// root + SPA fallbacks
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')))
 app.head('/', (_req, res) => res.status(200).end())
 app.get('*', (req, res, next) => {

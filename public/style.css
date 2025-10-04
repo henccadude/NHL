@@ -71,6 +71,7 @@ header h1 { margin: 0 0 4px; }
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #fff;
+  padding: 6px;
 }
 
 .tools { display: flex; gap: 8px; justify-content: flex-end; }
@@ -101,6 +102,50 @@ thead th {
 th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: right; }
 th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
 
+/* --- Styled search results --- */
+.list .result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  overflow: hidden;
+}
+.list .result-item + .result-item { margin-top: 8px; }
+.list .result-item:hover {
+  background: #f8fafc;
+  border-color: #dbe3ea;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.list .result-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.list .result-item .badge {
+  border: 0;
+  background: #eef2ff;
+  color: #312e81;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.list .result-item .name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hidden-input { display: none; }
+
 /* --------- Responsive tweaks --------- */
 @media (max-width: 980px) {
   .container { padding: 12px; }
@@ -118,7 +163,7 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
   table { min-width: 520px; }
 }
 
-/* --- Phone: transform player table to cards --- */
+/* --- Phone: transform player table to cards with explicit labels --- */
 @media (max-width: 640px) {
   .tablewrap { border: none; }
   table { min-width: 0; border-collapse: separate; border-spacing: 0; }
@@ -142,12 +187,10 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
     padding: 8px 0;
   }
 
-  tbody tr td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: var(--muted);
-    margin-right: 12px;
-  }
+  /* explicit labels come from markup (.cell-label), so suppress ::before */
+  tbody tr td::before { content: none; }
+  .cell-label { display: inline; font-weight: 600; color: var(--muted); margin-right: 12px; }
+  .cell-val { display: inline; }
 
   tbody tr td[data-label="Pelaaja"] {
     font-size: 16px;
@@ -158,14 +201,4 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
 
   tbody tr td:last-child { padding-top: 10px; }
   tbody tr td:last-child .btn { width: 100%; }
-}
-
-
-/* Explicit labels in markup for mobile cards */
-.cell-label { display: none; }
-@media (max-width: 640px) {
-  /* hide ::before labels to avoid duplication */
-  tbody tr td::before { content: none; }
-  .cell-label { display: inline; font-weight: 600; color: var(--muted); margin-right: 12px; }
-  .cell-val { display: inline; }
 }
