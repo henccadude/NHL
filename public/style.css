@@ -31,3 +31,48 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
 .tools { display: flex; gap: 8px; justify-content: flex-end; }
 .flex { display: flex; }
 .justify-between { justify-content: space-between; }
+
+/* --- Puhelinnäkymä: muunna taulukko korttilistaksi --- */
+@media (max-width: 640px) {
+  .tablewrap { border: none; }
+  table { min-width: 0; border-collapse: separate; border-spacing: 0; }
+  thead { display: none; }
+  tbody { display: block; }
+
+  tbody tr {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 10px 0;
+    padding: 12px;
+  }
+
+  tbody tr td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 0;
+    padding: 8px 0;
+  }
+
+  /* Näytä solun label vasemmalla, arvo oikealla */
+  tbody tr td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--muted);
+    margin-right: 12px;
+  }
+
+  /* Pelaajan nimi isompana kortin yläosassa */
+  tbody tr td[data-label="Pelaaja"] {
+    font-size: 16px;
+    font-weight: 700;
+    padding-top: 4px;
+    padding-bottom: 8px;
+  }
+
+  /* Poista-nappi koko rivin leveydelle */
+  tbody tr td:last-child { padding-top: 10px; }
+  tbody tr td:last-child .btn { width: 100%; }
+}
