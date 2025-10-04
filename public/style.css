@@ -164,8 +164,6 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
 }
 
 /* --- Phone: transform player table to cards with explicit labels --- */
-@media (max-width: 640px) {
-  .tablewrap { border: none; }
   table { min-width: 0; border-collapse: separate; border-spacing: 0; }
   thead { display: none; }
   tbody { display: block; }
@@ -200,5 +198,59 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
   }
 
   tbody tr td:last-child { padding-top: 10px; }
+  tbody tr td:last-child .btn { width: 100%; }
+
+
+/* Desktop: hide cell labels, show only values */
+.cell-label { display: none; }
+.cell-val { display: inline; }
+
+
+@media (max-width: 640px) {
+  .tablewrap { border: none; }
+  table { min-width: 0; border-collapse: separate; border-spacing: 0; }
+  thead { display: none; }
+  tbody { display: block; }
+
+  tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 10px 0;
+    padding: 12px;
+  }
+
+  tbody tr td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 0;
+    padding: 6px 0;
+  }
+
+  tbody tr td::before { content: none; }
+
+  .cell-label {
+    display: inline;
+    font-weight: 600;
+    color: var(--muted);
+    margin-right: 8px;
+  }
+  .cell-label::after { content: ': '; }
+  .cell-val { display: inline; }
+
+  tbody tr td[data-label="Pelaaja"] {
+    font-size: 16px;
+    font-weight: 700;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  tbody tr td[data-label="Pisteet"] .cell-val { font-weight: 700; }
+
+  tbody tr td:last-child { padding-top: 8px; }
   tbody tr td:last-child .btn { width: 100%; }
 }
