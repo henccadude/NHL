@@ -206,9 +206,7 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
 .cell-val { display: inline; }
 
 
-@media (max-width: 640px) {
-  .tablewrap { border: none; }
-  table { min-width: 0; border-collapse: separate; border-spacing: 0; }
+table { min-width: 0; border-collapse: separate; border-spacing: 0; }
   thead { display: none; }
   tbody { display: block; }
 
@@ -253,4 +251,162 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
 
   tbody tr td:last-child { padding-top: 8px; }
   tbody tr td:last-child .btn { width: 100%; }
+
+
+
+/* Desktop: rank badge hidden */
+.rank-badge { display: none; }
+
+@media (min-width: 641px) {
+  td .cell-label { display: none !important; }
+  td .cell-label::after { content: none !important; }
+}
+
+/* Mobile compact card with chips */
+.tablewrap { border: none; }
+  table { min-width: 0; border-collapse: separate; border-spacing: 0; }
+  tbody { display: block; }
+  tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 10px 0;
+    padding: 12px;
+  }
+  tbody tr td { border: 0; padding: 0; }
+
+  tbody tr td[data-label="#"] { display: none; }
+
+  tbody tr td[data-label="Pelaaja"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  td .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+  tbody tr td[data-label="Ottelut"],
+  tbody tr td[data-label="Maalit"],
+  tbody tr td[data-label="Syötöt"],
+  tbody tr td[data-label="Pisteet"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px;
+    width: calc(50% - 4px);
+  }
+  tbody tr td[data-label="Ottelut"]::before { content: "O"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Maalit"]::before { content: "M"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Syötöt"]::before { content: "S"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Pisteet"]::before { content: "P"; font-weight:700; color: var(--muted); margin-right: 4px; }
+
+  tbody tr td .cell-label { display: none !important; }
+  tbody tr td .cell-label::after { content: none !important; }
+
+  tbody tr td:last-child { width: 100%; }
+  tbody tr td:last-child .btn { width: 100%; margin-top: 2px; }
+
+
+
+/* --- Mobile (<=560px): compact player cards with O/M/S/P chips --- */
+@media (max-width: 560px) {
+  thead { display: none; }
+  .tablewrap { border: none; }
+  table { min-width: 0; border-collapse: separate; border-spacing: 0; }
+  tbody { display: block; }
+  tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin: 10px 0;
+    padding: 12px;
+  }
+  tbody tr td { border: 0; padding: 0; }
+
+  /* hide the separate # column; rank badge shown in name cell if present */
+  tbody tr td[data-label="#"] { display: none; }
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  tbody tr td[data-label="Pelaaja"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  td .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+  /* chips */
+  tbody tr td[data-label="Ottelut"],
+  tbody tr td[data-label="Maalit"],
+  tbody tr td[data-label="Syötöt"],
+  tbody tr td[data-label="Pisteet"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px;
+    width: calc(50% - 4px);
+  }
+  tbody tr td[data-label="Ottelut"]::before { content: "O"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Maalit"]::before { content: "M"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Syötöt"]::before { content: "S"; font-weight:600; color: var(--muted); margin-right: 4px; }
+  tbody tr td[data-label="Pisteet"]::before { content: "P"; font-weight:700; color: var(--muted); margin-right: 4px; }
+
+  /* delete button full width */
+  tbody tr td:last-child { width: 100%; }
+  tbody tr td:last-child .btn { width: 100%; margin-top: 2px; }
+}
+
+/* Desktop/tablet (>=561px): ensure table headers and rows are classic */
+@media (min-width: 561px) {
+  thead { display: table-header-group; }
+  tbody { display: table-row-group; }
+  tbody tr { display: table-row; background: transparent; border: 0; border-radius: 0; margin: 0; padding: 0; }
+  tbody tr td { display: table-cell; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .rank-badge { display: none; }
+}
+
+
+/* Enforce desktop defaults */
+@media (min-width: 561px) {
+  .tablewrap { border: 1px solid var(--border); border-radius: 12px; }
 }
