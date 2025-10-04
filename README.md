@@ -1,9 +1,9 @@
 
-# NHL Pool (Any Server) — v5
+# NHL Pool (Any Server) — v5.3
 
 - Pelaajahaku: Records API
 - Pisteet: api.nhle.com (skater/goalie summary), nimi api-web.nhle.com
-- UI: selkeä kausivalitsin-napparivi, ei ID-kenttää
+- UI: kausivalitsin-napit, Ranking-näkymä, mobiilissa pelaajataulukko muuttuu korteiksi
 
 ## Ajo
 ```bash

@@ -1,5 +1,5 @@
 
-const STORAGE_KEY = 'nhl_pool_anyserver_v5_1'
+const STORAGE_KEY = 'nhl_pool_anyserver_v5_3'
 
 // randomUUID polyfill
 if (!('crypto' in window) || !('randomUUID' in crypto)) {
@@ -24,7 +24,7 @@ function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(stat
 function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : [] }catch{ return [] }}
 
 // Static refs fetched on DOMContentLoaded
-let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel
+let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel, rankingBody, refreshAllBtn
 
 function buildSeasonButtons(){
   const seasonPickerEl = document.getElementById('seasonPicker')
@@ -47,6 +47,37 @@ function buildSeasonButtons(){
   })
 }
 
+function computeParticipantTotal(p){
+  let total = 0
+  for (const pick of (p.picks || [])){
+    const pts = pick && pick._stats && typeof pick._stats.points === 'number' ? pick._stats.points : 0
+    total += pts
+  }
+  return total
+}
+
+function renderRanking(){
+  if (!rankingBody) return
+  const items = state.participants.map(p => ({
+    id: p.id,
+    name: p.name,
+    count: p.picks?.length || 0,
+    total: computeParticipantTotal(p)
+  }))
+  items.sort((a,b)=> b.total - a.total || a.name.localeCompare(b.name))
+  rankingBody.innerHTML = ''
+  items.forEach((it, idx) => {
+    const tr = document.createElement('tr')
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${it.name}</td>
+      <td>${it.count}</td>
+      <td><b>${it.total}</b></td>
+    `
+    rankingBody.appendChild(tr)
+  })
+}
+
 function render(opts={}){
   const autoRefresh = !!opts.autoRefresh
   buildSeasonButtons()
@@ -57,7 +88,9 @@ function render(opts={}){
     const empty = document.createElement('div')
     empty.className = 'card'
     empty.innerHTML = '<p class="muted">Ei osallistujia vielä.</p>'
-    participantsEl.appendChild(empty); return
+    participantsEl.appendChild(empty);
+    rankingBody.innerHTML = ''
+    return
   }
 
   const pairs = []
@@ -68,8 +101,9 @@ function render(opts={}){
   })
 
   if (autoRefresh) {
-    // Päivitä kaikkien osallistujien pisteet valitulle kaudelle
-    pairs.forEach(({p, card}) => { refreshStats(p, card) })
+    pairs.forEach(({p, card}) => { refreshStats(p, card).then(()=>renderRanking()).catch(()=>renderRanking()) })
+  } else {
+    renderRanking()
   }
 }
 
@@ -125,9 +159,11 @@ function renderParticipant(participant){
     state.participants = state.participants.filter(pp => pp.id !== participant.id)
     saveState(); render()
   })
-  header.querySelector('[data-action="refresh"]').addEventListener('click', ()=> refreshStats(participant, card))
+  header.querySelector('[data-action="refresh"]').addEventListener('click', ()=> {
+    refreshStats(participant, card).then(()=>renderRanking())
+  })
 
-  // haku
+  // search
   const searchInput = content.querySelector('[data-role="search"]')
   const resultsEl = content.querySelector('[data-role="results"]')
   let t = null
@@ -142,13 +178,14 @@ function renderParticipant(participant){
         if (!r.ok) throw new Error('hakuvirhe ' + r.status)
         const arr = await r.json()
         if (!Array.isArray(arr) || arr.length===0){ resultsEl.innerHTML = '<div class="muted small" style="padding:8px">Ei tuloksia</div>'; return }
-        resultsEl.innerHTML = arr.map(p => `<button data-id="${p.id}" data-name="${p.name}"><span class="badge">#${p.id}</span> ${p.name}</button>`).join('')
+        resultsEl.innerHTML = arr.map(p => `<button data-id="\${p.id}" data-name="\${p.name}"><span class="badge">#\${p.id}</span> \${p.name}</button>`).join('')
         resultsEl.querySelectorAll('button').forEach(btn => {
           btn.addEventListener('click', async ()=>{
             const id = Number(btn.getAttribute('data-id'))
             const name = btn.getAttribute('data-name')
             addPick(participant, { id, name })
             await refreshStats(participant, card)
+            renderRanking()
           })
         })
       }catch(e){
@@ -189,13 +226,13 @@ function renderRows(participant, card){
     const s = p._stats || {}
     const tr = document.createElement('tr')
     tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${s.name || p.name}</td>
-      <td>${s.games ?? '-'}</td>
-      <td>${s.goals ?? '-'}</td>
-      <td>${s.assists ?? '-'}</td>
-      <td><b>${s.points ?? '-'}</b></td>
-      <td style="text-align:right"><button class="btn" data-remove>Poista</button></td>
+      <td data-label="#">${idx+1}</td>
+      <td data-label="Pelaaja">${s.name || p.name}</td>
+      <td data-label="Ottelut">${s.games ?? '-'}</td>
+      <td data-label="Maalit">${s.goals ?? '-'}</td>
+      <td data-label="Syötöt">${s.assists ?? '-'}</td>
+      <td data-label="Pisteet"><b>${s.points ?? '-'}</b></td>
+      <td data-label=""><button class="btn" data-remove>Poista</button></td>
     `
     tr.querySelector('[data-remove]').addEventListener('click', ()=>{
       participant.picks = participant.picks.filter(pp => pp.id !== p.id)
@@ -208,12 +245,25 @@ function renderRows(participant, card){
   if (totalEl) totalEl.textContent = total
 }
 
+async function refreshAllParticipants(){
+  const cards = Array.from(document.querySelectorAll('#participants .card'))
+  const participants = state.participants.slice()
+  for (let i = 0; i < participants.length; i++){
+    const p = participants[i]
+    const card = cards[i]
+    if (card) { await refreshStats(p, card) }
+  }
+  renderRanking()
+}
+
 // DOM ready
 window.addEventListener('DOMContentLoaded', () => {
   participantsEl = document.getElementById('participants')
   newParticipantEl = document.getElementById('newParticipant')
   addParticipantBtn = document.getElementById('addParticipant')
   seasonLabel = document.getElementById('seasonLabel')
+  rankingBody = document.getElementById('rankingBody')
+  refreshAllBtn = document.getElementById('refreshAll')
 
   addParticipantBtn.addEventListener('click', () => {
     const name = (newParticipantEl.value || '').trim()
@@ -223,6 +273,8 @@ window.addEventListener('DOMContentLoaded', () => {
     newParticipantEl.value = ''
     saveState(); render()
   })
+
+  if (refreshAllBtn) refreshAllBtn.addEventListener('click', () => refreshAllParticipants())
 
   render()
 })
