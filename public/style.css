@@ -159,3 +159,13 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: l
   tbody tr td:last-child { padding-top: 10px; }
   tbody tr td:last-child .btn { width: 100%; }
 }
+
+
+/* Explicit labels in markup for mobile cards */
+.cell-label { display: none; }
+@media (max-width: 640px) {
+  /* hide ::before labels to avoid duplication */
+  tbody tr td::before { content: none; }
+  .cell-label { display: inline; font-weight: 600; color: var(--muted); margin-right: 12px; }
+  .cell-val { display: inline; }
+}

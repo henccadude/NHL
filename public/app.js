@@ -218,6 +218,7 @@ async function refreshStats(participant, card){
   saveState()
 }
 
+
 function renderRows(participant, card){
   const tbody = card.querySelector('[data-role="tbody"]')
   tbody.innerHTML=''
@@ -226,12 +227,12 @@ function renderRows(participant, card){
     const s = p._stats || {}
     const tr = document.createElement('tr')
     tr.innerHTML = `
-      <td data-label="#">${idx+1}</td>
-      <td data-label="Pelaaja">${s.name || p.name}</td>
-      <td data-label="Ottelut">${s.games ?? '-'}</td>
-      <td data-label="Maalit">${s.goals ?? '-'}</td>
-      <td data-label="Syötöt">${s.assists ?? '-'}</td>
-      <td data-label="Pisteet"><b>${s.points ?? '-'}</b></td>
+      <td data-label="#"><span class="cell-label">#</span><span class="cell-val">${idx+1}</span></td>
+      <td data-label="Pelaaja"><span class="cell-label">Pelaaja</span><span class="cell-val">${s.name || p.name}</span></td>
+      <td data-label="Ottelut"><span class="cell-label">Ottelut</span><span class="cell-val">${s.games ?? '-'}</span></td>
+      <td data-label="Maalit"><span class="cell-label">Maalit</span><span class="cell-val">${s.goals ?? '-'}</span></td>
+      <td data-label="Syötöt"><span class="cell-label">Syötöt</span><span class="cell-val">${s.assists ?? '-'}</span></td>
+      <td data-label="Pisteet"><span class="cell-label">Pisteet</span><span class="cell-val"><b>${s.points ?? '-'}</b></span></td>
       <td data-label=""><button class="btn" data-remove>Poista</button></td>
     `
     tr.querySelector('[data-remove]').addEventListener('click', ()=>{
@@ -243,6 +244,7 @@ function renderRows(participant, card){
   })
   const totalEl = card.querySelector('#total')
   if (totalEl) totalEl.textContent = total
+}
 }
 
 async function refreshAllParticipants(){
