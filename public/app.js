@@ -178,15 +178,28 @@ function renderParticipant(participant){
         if (!r.ok) throw new Error('hakuvirhe ' + r.status)
         const arr = await r.json()
         if (!Array.isArray(arr) || arr.length===0){ resultsEl.innerHTML = '<div class="muted small" style="padding:8px">Ei tuloksia</div>'; return }
-        resultsEl.innerHTML = arr.map(p => `<button data-id="${p.id}" data-name="${p.name}"><span class="badge">#${p.id}</span> ${p.name}</button>`).join('')
-        resultsEl.querySelectorAll('button').forEach(btn => {
-          btn.addEventListener('click', async ()=>{
+        resultsEl.innerHTML = ''
+        arr.forEach(p => {
+          const btn = document.createElement('button')
+          btn.setAttribute('data-id', String(p.id))
+          btn.setAttribute('data-name', p.name)
+
+          const tag = document.createElement('span')
+          tag.className = 'badge'
+          tag.textContent = '#' + p.id
+
+          btn.appendChild(tag)
+          btn.appendChild(document.createTextNode(' ' + p.name))
+
+          btn.addEventListener('click', async () => {
             const id = Number(btn.getAttribute('data-id'))
-            const name = btn.getAttribute('data-name')
+            const name = btn.getAttribute('data-name') || ''
             addPick(participant, { id, name })
             await refreshStats(participant, card)
             renderRanking()
           })
+
+          resultsEl.appendChild(btn)
         })
       }catch(e){
         console.error('search fail', e)
