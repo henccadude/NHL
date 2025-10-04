@@ -245,7 +245,7 @@ function renderRows(participant, card){
   const totalEl = card.querySelector('#total')
   if (totalEl) totalEl.textContent = total
 }
-}
+
 
 async function refreshAllParticipants(){
   const cards = Array.from(document.querySelectorAll('#participants .card'))
