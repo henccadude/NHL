@@ -178,7 +178,7 @@ function renderParticipant(participant){
         if (!r.ok) throw new Error('hakuvirhe ' + r.status)
         const arr = await r.json()
         if (!Array.isArray(arr) || arr.length===0){ resultsEl.innerHTML = '<div class="muted small" style="padding:8px">Ei tuloksia</div>'; return }
-        resultsEl.innerHTML = arr.map(p => `<button data-id="\${p.id}" data-name="\${p.name}"><span class="badge">#\${p.id}</span> \${p.name}</button>`).join('')
+        resultsEl.innerHTML = arr.map(p => `<button data-id="${p.id}" data-name="${p.name}"><span class="badge">#${p.id}</span> ${p.name}</button>`).join('')
         resultsEl.querySelectorAll('button').forEach(btn => {
           btn.addEventListener('click', async ()=>{
             const id = Number(btn.getAttribute('data-id'))
