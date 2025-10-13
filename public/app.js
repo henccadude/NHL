@@ -1,5 +1,5 @@
 
-const STORAGE_KEY = 'nhl_pool_anyserver_v5_4'
+const STORAGE_KEY = 'nhl_pool_anyserver_v5_1'
 
 // randomUUID polyfill
 if (!('crypto' in window) || !('randomUUID' in crypto)) {
@@ -20,41 +20,11 @@ function currentNHLSeason(date = new Date()) {
 function seasonFromStartYear(y) { return `${y}${y+1}` }
 function fmtSeason(s){ return `${s.slice(0,4)}–${s.slice(4)}` }
 
-function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.participants)) }
-  catch(e){ console.error('saveState failed', e); alert('Tallennus epäonnistui (selainvarasto täynnä?)') }
-}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.participants)) }catch{} }
 function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : [] }catch{ return [] }}
 
-// --- Export / Import JSON ---
-function exportJSON(){
-  try{
-    const data = JSON.stringify(state.participants, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `nhl-pool-${state.season}.json`
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() }, 500)
-  }catch(e){ alert('Vienti epäonnistui') }
-}
-function importJSONFile(file){
-  const reader = new FileReader()
-  reader.onload = () => {
-    try{
-      const arr = JSON.parse(reader.result)
-      if (!Array.isArray(arr)) throw new Error('not array')
-      state.participants = arr
-      saveState()
-      render({ autoRefresh: true })
-    }catch(e){ alert('Virheellinen JSON-tiedosto') }
-  }
-  reader.readAsText(file)
-}
-
 // Static refs fetched on DOMContentLoaded
-let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel, rankingBody, refreshAllBtn, btnExport, btnImport, fileImport
+let participantsEl, newParticipantEl, addParticipantBtn, seasonLabel
 
 function buildSeasonButtons(){
   const seasonPickerEl = document.getElementById('seasonPicker')
@@ -77,37 +47,6 @@ function buildSeasonButtons(){
   })
 }
 
-function computeParticipantTotal(p){
-  let total = 0
-  for (const pick of (p.picks || [])){
-    const pts = pick && pick._stats && typeof pick._stats.points === 'number' ? pick._stats.points : 0
-    total += pts
-  }
-  return total
-}
-
-function renderRanking(){
-  if (!rankingBody) return
-  const items = state.participants.map(p => ({
-    id: p.id,
-    name: p.name,
-    count: p.picks?.length || 0,
-    total: computeParticipantTotal(p)
-  }))
-  items.sort((a,b)=> b.total - a.total || a.name.localeCompare(b.name))
-  rankingBody.innerHTML = ''
-  items.forEach((it, idx) => {
-    const tr = document.createElement('tr')
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${it.name}</td>
-      <td>${it.count}</td>
-      <td><b>${it.total}</b></td>
-    `
-    rankingBody.appendChild(tr)
-  })
-}
-
 function render(opts={}){
   const autoRefresh = !!opts.autoRefresh
   buildSeasonButtons()
@@ -118,9 +57,7 @@ function render(opts={}){
     const empty = document.createElement('div')
     empty.className = 'card'
     empty.innerHTML = '<p class="muted">Ei osallistujia vielä.</p>'
-    participantsEl.appendChild(empty);
-    rankingBody.innerHTML = ''
-    return
+    participantsEl.appendChild(empty); return
   }
 
   const pairs = []
@@ -131,9 +68,8 @@ function render(opts={}){
   })
 
   if (autoRefresh) {
-    pairs.forEach(({p, card}) => { refreshStats(p, card).then(()=>renderRanking()).catch(()=>renderRanking()) })
-  } else {
-    renderRanking()
+    // Päivitä kaikkien osallistujien pisteet valitulle kaudelle
+    pairs.forEach(({p, card}) => { refreshStats(p, card) })
   }
 }
 
@@ -189,11 +125,9 @@ function renderParticipant(participant){
     state.participants = state.participants.filter(pp => pp.id !== participant.id)
     saveState(); render()
   })
-  header.querySelector('[data-action="refresh"]').addEventListener('click', ()=> {
-    refreshStats(participant, card).then(()=>renderRanking())
-  })
+  header.querySelector('[data-action="refresh"]').addEventListener('click', ()=> refreshStats(participant, card))
 
-  // search
+  // haku
   const searchInput = content.querySelector('[data-role="search"]')
   const resultsEl = content.querySelector('[data-role="results"]')
   let t = null
@@ -208,28 +142,14 @@ function renderParticipant(participant){
         if (!r.ok) throw new Error('hakuvirhe ' + r.status)
         const arr = await r.json()
         if (!Array.isArray(arr) || arr.length===0){ resultsEl.innerHTML = '<div class="muted small" style="padding:8px">Ei tuloksia</div>'; return }
-        resultsEl.innerHTML = ''
-        arr.forEach(p => {
-          const btn = document.createElement('button')
-          btn.setAttribute('data-id', String(p.id))
-          btn.setAttribute('data-name', p.name)
-          btn.className = 'result-item'
-          const tag = document.createElement('span')
-          tag.className = 'badge'
-          tag.textContent = '#' + p.id
-          const nameSpan = document.createElement('span')
-          nameSpan.className = 'name'
-          nameSpan.textContent = p.name
-          btn.appendChild(tag)
-          btn.appendChild(nameSpan)
-          btn.addEventListener('click', async () => {
+        resultsEl.innerHTML = arr.map(p => `<button data-id="${p.id}" data-name="${p.name}"><span class="badge">#${p.id}</span> ${p.name}</button>`).join('')
+        resultsEl.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', async ()=>{
             const id = Number(btn.getAttribute('data-id'))
-            const name = btn.getAttribute('data-name') || ''
+            const name = btn.getAttribute('data-name')
             addPick(participant, { id, name })
             await refreshStats(participant, card)
-            renderRanking()
           })
-          resultsEl.appendChild(btn)
         })
       }catch(e){
         console.error('search fail', e)
@@ -269,13 +189,13 @@ function renderRows(participant, card){
     const s = p._stats || {}
     const tr = document.createElement('tr')
     tr.innerHTML = `
-      <td data-label="#"><span class="cell-label">#</span><span class="cell-val">${idx+1}</span></td>
-      <td data-label="Pelaaja"><span class="cell-label">Pelaaja</span><span class="cell-val">${s.name || p.name}</span></td>
-      <td data-label="Ottelut"><span class="cell-label">Ottelut</span><span class="cell-val">${s.games ?? '-'}</span></td>
-      <td data-label="Maalit"><span class="cell-label">Maalit</span><span class="cell-val">${s.goals ?? '-'}</span></td>
-      <td data-label="Syötöt"><span class="cell-label">Syötöt</span><span class="cell-val">${s.assists ?? '-'}</span></td>
-      <td data-label="Pisteet"><span class="cell-label">Pisteet</span><span class="cell-val"><b>${s.points ?? '-'}</b></span></td>
-      <td data-label=""><button class="btn" data-remove>Poista</button></td>
+      <td>${idx+1}</td>
+      <td>${s.name || p.name}</td>
+      <td>${s.games ?? '-'}</td>
+      <td>${s.goals ?? '-'}</td>
+      <td>${s.assists ?? '-'}</td>
+      <td><b>${s.points ?? '-'}</b></td>
+      <td style="text-align:right"><button class="btn" data-remove>Poista</button></td>
     `
     tr.querySelector('[data-remove]').addEventListener('click', ()=>{
       participant.picks = participant.picks.filter(pp => pp.id !== p.id)
@@ -288,28 +208,12 @@ function renderRows(participant, card){
   if (totalEl) totalEl.textContent = total
 }
 
-async function refreshAllParticipants(){
-  const cards = Array.from(document.querySelectorAll('#participants .card'))
-  const participants = state.participants.slice()
-  for (let i = 0; i < participants.length; i++){
-    const p = participants[i]
-    const card = cards[i]
-    if (card) { await refreshStats(p, card) }
-  }
-  renderRanking()
-}
-
 // DOM ready
 window.addEventListener('DOMContentLoaded', () => {
   participantsEl = document.getElementById('participants')
   newParticipantEl = document.getElementById('newParticipant')
   addParticipantBtn = document.getElementById('addParticipant')
   seasonLabel = document.getElementById('seasonLabel')
-  rankingBody = document.getElementById('rankingBody')
-  refreshAllBtn = document.getElementById('refreshAll')
-  btnExport = document.getElementById('btnExport')
-  btnImport = document.getElementById('btnImport')
-  fileImport = document.getElementById('fileImport')
 
   addParticipantBtn.addEventListener('click', () => {
     const name = (newParticipantEl.value || '').trim()
@@ -318,15 +222,6 @@ window.addEventListener('DOMContentLoaded', () => {
     state.participants.unshift({ id: crypto.randomUUID(), name, picks: [] })
     newParticipantEl.value = ''
     saveState(); render()
-  })
-
-  if (refreshAllBtn) refreshAllBtn.addEventListener('click', () => refreshAllParticipants())
-  if (btnExport) btnExport.addEventListener('click', () => exportJSON())
-  if (btnImport) btnImport.addEventListener('click', () => fileImport && fileImport.click())
-  if (fileImport) fileImport.addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0]
-    if (f) importJSONFile(f)
-    e.target.value = ''
   })
 
   render()

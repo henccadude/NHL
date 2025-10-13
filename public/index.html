@@ -1,65 +1,47 @@
 
 <!doctype html>
 <html lang="fi">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NHL Pool</title>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <div class="container">
-    <header class="card">
-      <h1>NHL Pool</h1>
-      <div class="muted small">Valitse osallistujat, hae pelaajia ja seuraa pisteitä kaudella.</div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL-poolin pisteiden seuranta</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>NHL-poolin pisteiden seuranta</h1>
+        <p class="muted">Valitse 10 pelaajaa / osallistuja. Pisteet päivittyvät Stats API:sta valitulle kaudelle.</p>
+      </header>
 
-    <section class="card">
-      <h2>Kausi</h2>
-      <div id="seasonPicker" class="row gap"></div>
-      <span class="muted small" id="seasonLabel"></span>
-    </section>
-
-    <section class="card">
-      <div class="flex justify-between">
-        <h2>Ranking</h2>
-        <div class="tools">
-          <button id="refreshAll" class="btn">Päivitä kaikkien pisteet</button>
+      <section class="card">
+        <h2>Kausi</h2>
+        <div id="seasonPicker" class="row gap">
+          <button id="btnPrev" class="btn">Edellinen</button>
+          <button id="btnCur" class="btn btn-primary">Nykyinen</button>
+          <button id="btnNext" class="btn">Seuraava</button>
+          
+          
+          <span class="muted small" id="seasonLabel"></span>
         </div>
-      </div>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th><th>Osallistuja</th><th>Pelaajia</th><th>Pisteet yhteensä</th>
-            </tr>
-          </thead>
-          <tbody id="rankingBody"></tbody>
-        </table>
-      </div>
-    </section>
+      </section>
 
-    <section class="card">
-      <h2>Varmuuskopiointi</h2>
-      <div class="row gap">
-        <button id="btnExport" class="btn">Vie JSON</button>
-        <button id="btnImport" class="btn">Tuo JSON</button>
-        <input id="fileImport" type="file" accept="application/json,.json" class="hidden-input" />
-        <span class="muted small">Vie/Tuo osallistujat ja valinnat tältä laitteelta.</span>
-      </div>
-    </section>
+      <section class="card">
+        <h2>Lisää osallistuja</h2>
+        <div class="row gap">
+          <input id="newParticipant" class="input" placeholder="Osallistujan nimi" />
+          <button id="addParticipant" class="btn btn-primary">Lisää</button>
+        </div>
+      </section>
 
-    <section class="card">
-      <h2>Osallistujat</h2>
-      <div class="row gap">
-        <input id="newParticipant" class="input" placeholder="Osallistujan nimi" />
-        <button id="addParticipant" class="btn btn-primary">Lisää osallistuja</button>
-      </div>
-    </section>
+      <div id="participants"></div>
 
-    <section id="participants"></section>
-  </div>
+      <footer class="muted small">
+        <hr/>
+        <p>Vinkki: Hae pelaajia nimellä (Records API). Pisteet noudetaan Stats API:sta valitulle kaudelle.</p>
+      </footer>
+    </div>
 
-  <script src="/app.js" type="module"></script>
-</body>
+    <script src="./app.js" type="module"></script>
+  </body>
 </html>

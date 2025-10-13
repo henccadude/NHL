@@ -1,10 +1,9 @@
 
-# NHL Pool (Any Server) — v5.3.4
+# NHL Pool (Any Server) — v5
 
-- Pelaajahaku: Records API (proxytetty serverin kautta)
+- Pelaajahaku: Records API
 - Pisteet: api.nhle.com (skater/goalie summary), nimi api-web.nhle.com
-- UI: Kausivalitsin-napit, Ranking, mobiilikortit (selkeät labelit), siistit hakutulosnapit
-- Vienti/Tuonti: Vie JSON / Tuo JSON -napit localStoragen varmuuskopiointiin
+- UI: selkeä kausivalitsin-napparivi, ei ID-kenttää
 
 ## Ajo
 ```bash
@@ -12,3 +11,7 @@ npm install
 npm start
 # http://localhost:3000
 ```
+
+## Testit
+- Haku: http://localhost:3000/api/search?name=mcdavid
+- Pisteet: http://localhost:3000/api/player/8478402?season=20242025
